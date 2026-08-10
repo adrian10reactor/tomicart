@@ -175,7 +175,7 @@ export default function Menu({ onPlay, onEdit }) {
               {s.label}
             </button>
           ))}
-          <div className="ml-auto flex gap-2">
+          <div className="ml-auto hidden sm:flex gap-2">
             <button
               onClick={onCreate}
               className="text-sm rounded-full bg-white text-black px-4 py-1.5 hover:bg-white/90"
