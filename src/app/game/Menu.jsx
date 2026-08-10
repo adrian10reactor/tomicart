@@ -12,14 +12,21 @@ import {
   BUILTIN_LEVELS,
   deleteCustomLevel,
   getAllLevels,
-  loadCustomLevels,
   loadStats,
   makeEmptyLevel,
-  saveCustomLevels,
   sortLevels,
   toggleLike,
   upsertCustomLevel,
 } from "./levels";
+import { getNickname } from "./player";
+import {
+  deleteCloudLevel,
+  fetchCloudLevels,
+  fetchTopScores,
+  isConfigured,
+  toggleLikeCloud,
+  upsertCloudLevel,
+} from "./supabase";
 
 const SORTS = [
   { key: "plays", label: "Most played" },
@@ -32,18 +39,35 @@ export default function Menu({ onPlay, onEdit }) {
   // data loads in a mount effect below.
   const [levels, setLevels] = useState(BUILTIN_LEVELS);
   const [stats, setStats] = useState({});
+  const [topScores, setTopScores] = useState({}); // { levelId: {nickname, score} }
+  const [myNickname, setMyNickname] = useState("");
   const [sortBy, setSortBy] = useState("plays");
-  const [showJson, setShowJson] = useState(false);
-  const [jsonText, setJsonText] = useState("");
-  const [jsonError, setJsonError] = useState("");
 
+  // Local list is instant. Cloud list + top scores arrive async and get
+  // merged in (deduped by id) so shared levels and their high-scorers
+  // appear alongside your local ones.
   const refresh = () => {
-    setLevels(getAllLevels());
+    const localLevels = getAllLevels();
+    setLevels(localLevels);
     setStats(loadStats());
+    if (isConfigured()) {
+      fetchCloudLevels().then((cloud) => {
+        setLevels((current) => {
+          const byId = new Map(current.map((l) => [l.id, l]));
+          for (const cl of cloud) byId.set(cl.id, cl);
+          return Array.from(byId.values());
+        });
+        const ids = [
+          ...new Set([...localLevels.map((l) => l.id), ...cloud.map((l) => l.id)]),
+        ];
+        fetchTopScores(ids).then(setTopScores);
+      });
+    }
   };
 
   useEffect(() => {
     refresh();
+    setMyNickname(getNickname() || "");
   }, []);
 
   // Music runs on the menu too. Autoplay needs a user gesture — we call
@@ -79,8 +103,10 @@ export default function Menu({ onPlay, onEdit }) {
   );
 
   const onCreate = () => {
-    const level = makeEmptyLevel("Untitled level");
+    const nickname = getNickname() || "anon";
+    const level = { ...makeEmptyLevel("Untitled level"), author: nickname };
     upsertCustomLevel(level);
+    upsertCloudLevel(level, nickname);
     refresh();
     onEdit(level.id);
   };
@@ -88,57 +114,15 @@ export default function Menu({ onPlay, onEdit }) {
   const onDelete = (id) => {
     if (!confirm("Delete this level?")) return;
     deleteCustomLevel(id);
+    deleteCloudLevel(id);
     refresh();
   };
 
   const onLike = (id) => {
     toggleLike(id);
     setStats(loadStats());
-  };
-
-  const onImport = () => {
-    setJsonError("");
-    try {
-      const parsed = JSON.parse(jsonText);
-      const list = Array.isArray(parsed) ? parsed : [parsed];
-      const existing = loadCustomLevels();
-      const byId = new Map(existing.map((l) => [l.id, l]));
-      for (const l of list) {
-        if (!l || !l.id || !l.name || !Array.isArray(l.spawnTable)) {
-          throw new Error("Invalid level shape");
-        }
-        byId.set(l.id, { ...l, builtIn: false });
-      }
-      saveCustomLevels(Array.from(byId.values()));
-      setShowJson(false);
-      setJsonText("");
-      refresh();
-    } catch (e) {
-      setJsonError(String(e.message || e));
-    }
-  };
-
-  const onExportAll = () => {
-    const list = loadCustomLevels();
-    const json = JSON.stringify(list, null, 2);
-    const blob = new Blob([json], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "tomicart-levels.json";
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
-  const onExportOne = (level) => {
-    const json = JSON.stringify(level, null, 2);
-    const blob = new Blob([json], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${level.id}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
+    const nickname = getNickname();
+    if (nickname) toggleLikeCloud(id, nickname).then(() => refresh());
   };
 
   return (
@@ -198,119 +182,98 @@ export default function Menu({ onPlay, onEdit }) {
             >
               + New level
             </button>
-            <button
-              onClick={() => setShowJson((v) => !v)}
-              className="text-sm rounded-full border border-white/20 text-white/80 px-4 py-1.5 hover:border-white/40"
-            >
-              Import JSON
-            </button>
-            <button
-              onClick={onExportAll}
-              className="text-sm rounded-full border border-white/20 text-white/80 px-4 py-1.5 hover:border-white/40"
-            >
-              Export all
-            </button>
           </div>
         </div>
 
-        {showJson && (
-          <div className="mb-6 rounded-xl bg-white/5 border border-white/10 p-4">
-            <p className="text-sm text-white/60 mb-2">
-              Paste one level object, or an array of level objects.
-            </p>
-            <textarea
-              value={jsonText}
-              onChange={(e) => setJsonText(e.target.value)}
-              rows={6}
-              placeholder='{ "id": "...", "name": "...", "spawnTable": [...] }'
-              className="w-full bg-black/40 border border-white/10 rounded p-2 font-mono text-xs"
-            />
-            {jsonError && (
-              <div className="text-red-400 text-sm mt-2">{jsonError}</div>
-            )}
-            <div className="flex justify-end gap-2 mt-3">
-              <button
-                onClick={() => {
-                  setShowJson(false);
-                  setJsonText("");
-                  setJsonError("");
-                }}
-                className="text-sm text-white/60 hover:text-white/90"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={onImport}
-                className="text-sm rounded-full bg-white text-black px-4 py-1.5 hover:bg-white/90"
-              >
-                Import
-              </button>
-            </div>
-          </div>
-        )}
-
-        <div className="grid gap-3">
+        <div className="grid gap-4">
           {sorted.map((l) => {
             const s = stats[l.id] ?? { plays: 0, likes: 0, best: 0 };
+            const top = topScores[l.id];
+            const author = l.builtIn ? "built-in" : l.author || "anon";
+            // Ownership: you can edit / delete a level only if it carries
+            // your nickname as author. Legacy levels with no author (older
+            // client, imported json) stay editable so people can adopt them.
+            const isOwner =
+              !l.builtIn && (!l.author || l.author === myNickname);
             return (
               <div
                 key={l.id}
-                className="rounded-xl bg-white/5 border border-white/10 p-4 hover:border-white/20 transition"
+                className="rounded-2xl bg-gradient-to-br from-white/[0.06] to-white/[0.02] border border-white/10 p-5 hover:border-cyan-400/30 hover:from-white/[0.08] transition"
               >
-                <div className="flex items-start gap-4">
+                <div className="flex items-start gap-5">
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <h2 className="text-xl font-medium">{l.name}</h2>
-                      {l.builtIn && (
-                        <span className="text-[10px] uppercase tracking-wider bg-white/10 px-1.5 py-0.5 rounded">
-                          built-in
-                        </span>
-                      )}
+                    <div className="flex items-baseline gap-3 flex-wrap">
+                      <h2 className="text-2xl font-semibold tracking-tight">
+                        {l.name}
+                      </h2>
+                      <span
+                        className={
+                          "text-[11px] " +
+                          (l.builtIn
+                            ? "px-2 py-0.5 rounded-full bg-cyan-500/15 text-cyan-300 border border-cyan-400/30"
+                            : "text-white/50")
+                        }
+                      >
+                        {l.builtIn ? "BUILT-IN" : `by ${author}`}
+                      </span>
                     </div>
                     {l.description && (
-                      <p className="text-white/60 text-sm mt-1">
+                      <p className="text-white/60 text-sm mt-1.5">
                         {l.description}
                       </p>
                     )}
-                    <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-xs text-white/50 font-mono">
-                      <span>▶ {s.plays} plays</span>
-                      <span>♥ {s.likes}</span>
-                      <span>best {s.best}</span>
-                      <span>
-                        speed {l.baseSpeed} · {l.spawnTable.length} kinds
+
+                    <div className="mt-3 flex flex-wrap items-center gap-3">
+                      <div className="inline-flex items-center gap-2 rounded-lg bg-black/30 border border-white/10 px-3 py-1.5">
+                        <span className="text-amber-300">🏆</span>
+                        {top ? (
+                          <>
+                            <span className="font-bold tabular-nums">
+                              {top.score}
+                            </span>
+                            <span className="text-white/50 text-sm">
+                              by{" "}
+                              <span className="text-white/80">
+                                {top.nickname}
+                              </span>
+                            </span>
+                          </>
+                        ) : (
+                          <span className="text-white/40 text-sm">
+                            no high score yet
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-xs text-white/40">
+                        ▶ {s.plays} · ♥ {s.likes}
                       </span>
                     </div>
                   </div>
-                  <div className="flex flex-col gap-1 shrink-0">
+
+                  <div className="flex flex-col gap-1.5 shrink-0">
                     <button
                       onClick={() => onPlay(l.id)}
-                      className="rounded-full bg-white text-black px-5 py-1.5 text-sm font-medium hover:bg-white/90"
+                      className="rounded-full bg-white text-black px-6 py-2 text-sm font-semibold hover:bg-white/90 shadow-sm"
                     >
                       Play
                     </button>
                     <button
                       onClick={() => onLike(l.id)}
-                      className={`rounded-full text-xs px-3 py-1 border ${
+                      className={`rounded-full text-xs px-3 py-1 border transition ${
                         s.likes
-                          ? "bg-white/20 border-white/40 text-white"
+                          ? "bg-pink-500/15 border-pink-400/40 text-pink-200"
                           : "border-white/10 text-white/60 hover:border-white/30"
                       }`}
                     >
                       {s.likes ? "♥ Liked" : "♡ Like"}
                     </button>
-                    {!l.builtIn && (
+                    {isOwner && (
                       <>
                         <button
                           onClick={() => onEdit(l.id)}
                           className="rounded-full text-xs px-3 py-1 border border-white/10 text-white/60 hover:border-white/30"
                         >
                           Edit
-                        </button>
-                        <button
-                          onClick={() => onExportOne(l)}
-                          className="rounded-full text-xs px-3 py-1 border border-white/10 text-white/60 hover:border-white/30"
-                        >
-                          Export
                         </button>
                         <button
                           onClick={() => onDelete(l.id)}
@@ -328,8 +291,7 @@ export default function Menu({ onPlay, onEdit }) {
         </div>
 
         <footer className="mt-10 text-white/40 text-xs">
-          Levels are stored locally in your browser. Use Export/Import to move
-          them between devices or share with a friend.
+          Levels and high scores sync across everyone playing Tomicart.
         </footer>
       </div>
     </div>

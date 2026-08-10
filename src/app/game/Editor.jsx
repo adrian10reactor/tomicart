@@ -14,6 +14,8 @@ import {
   makeEmptyLevel,
   upsertCustomLevel,
 } from "./levels";
+import { getNickname } from "./player";
+import { upsertCloudLevel } from "./supabase";
 import { buildCurve, frameAt } from "./spline";
 
 const KIND_ICONS = {
@@ -984,13 +986,35 @@ export default function Editor({ levelId, onBack, onSave, onPlay }) {
     return () => window.removeEventListener("keydown", onKey);
   }, [onDelete]);
 
+  // Ownership guard: refuse to overwrite a level authored by someone else.
+  // Menu already hides the Edit button for non-owners, this is defense in
+  // depth (deep-link, stale tab, etc.).
+  const ensureOwnership = () => {
+    const nickname = getNickname() || "";
+    if (level.author && level.author !== nickname) {
+      alert(
+        `This level was made by "${level.author}". Only they can save changes to it.`
+      );
+      return null;
+    }
+    return nickname || "anon";
+  };
+
   const save = () => {
-    upsertCustomLevel(level);
-    onSave?.(level);
+    const nickname = ensureOwnership();
+    if (!nickname) return;
+    const withAuthor = { ...level, author: level.author || nickname };
+    upsertCustomLevel(withAuthor);
+    upsertCloudLevel(withAuthor, nickname);
+    onSave?.(withAuthor);
   };
   const playIt = () => {
-    upsertCustomLevel(level);
-    onPlay(level.id);
+    const nickname = ensureOwnership();
+    if (!nickname) return;
+    const withAuthor = { ...level, author: level.author || nickname };
+    upsertCustomLevel(withAuthor);
+    upsertCloudLevel(withAuthor, nickname);
+    onPlay(withAuthor.id);
   };
 
   return (
