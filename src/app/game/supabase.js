@@ -101,11 +101,12 @@ export async function deleteCloudLevel(id) {
 export async function submitScore(levelId, nickname, score) {
   const c = await getClient();
   if (!c) return;
-  await c.from("scores").insert({
+  const { error } = await c.from("scores").insert({
     level_id: levelId,
     player_nickname: nickname,
     score,
   });
+  if (error) console.error("[supabase] submitScore failed:", error);
 }
 
 // Top score per level for a batch of level ids. Returns

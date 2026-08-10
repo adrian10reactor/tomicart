@@ -33,9 +33,13 @@ create index if not exists levels_created_at_idx
   on public.levels (created_at desc);
 
 -- ---------- scores ----------
+-- level_id is a plain string, NOT a foreign key. Built-in levels (Rollercoaster,
+-- Endless, …) never get upserted into the levels table, so an FK here would
+-- silently reject every score on a built-in. Orphan scores (level was deleted)
+-- just don't get read.
 create table if not exists public.scores (
   id uuid primary key default gen_random_uuid(),
-  level_id text not null references public.levels(id) on delete cascade,
+  level_id text not null,
   player_nickname text not null,
   score integer not null,
   created_at timestamptz not null default now()
@@ -45,8 +49,9 @@ create index if not exists scores_level_score_idx
   on public.scores (level_id, score desc);
 
 -- ---------- likes ----------
+-- Same story as scores: level_id is a plain string so built-ins can be liked.
 create table if not exists public.likes (
-  level_id text not null references public.levels(id) on delete cascade,
+  level_id text not null,
   player_nickname text not null,
   created_at timestamptz not null default now(),
   primary key (level_id, player_nickname)
