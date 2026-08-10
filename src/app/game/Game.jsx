@@ -796,7 +796,7 @@ export default function Game({ level, best, onScore, onGameOver, onExit }) {
         return;
       }
       if (adx > ady && adx > SWIPE) {
-        switchLane(dx < 0 ? "right" : "left");
+        switchLane(dx < 0 ? "left" : "right");
       }
     };
     window.addEventListener("touchstart", onStart, { passive: true });
