@@ -1,5 +1,7 @@
 "use client";
 
+import { normalizeLevel } from "./levels";
+
 // Supabase client. Kept as an optional dependency — if the env vars aren't
 // set (e.g. local dev without a project, or previews), every export gracefully
 // no-ops so the app still runs on localStorage alone. Once you paste the
@@ -73,12 +75,17 @@ export async function fetchCloudLevels() {
     .order("created_at", { ascending: false })
     .limit(200);
   if (error) return [];
-  return (data || []).map((row) => ({
-    ...row.data,
-    id: row.id,
-    author: row.author_nickname,
-    _cloud: { plays: row.plays, likes: row.likes, createdAt: row.created_at },
-  }));
+  return (data || []).map((row) => {
+    // normalizeLevel enforces the y-slope cap, seam continuity, laneDeltas
+    // shape, etc. Skip it and steep/malformed cloud levels flip the spline
+    // frame at runtime (upside-down camera).
+    const normalized = normalizeLevel({ ...row.data, id: row.id });
+    return {
+      ...normalized,
+      author: row.author_nickname,
+      _cloud: { plays: row.plays, likes: row.likes, createdAt: row.created_at },
+    };
+  });
 }
 
 export async function upsertCloudLevel(level, nickname) {
