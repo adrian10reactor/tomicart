@@ -1,23 +1,19 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Editor from "./game/Editor";
 import Game from "./game/Game";
 import Menu from "./game/Menu";
 import NicknamePrompt from "./game/NicknamePrompt";
-import {
-  getAllLevels,
-  loadStats,
-  recordBest,
-  recordPlay,
-} from "./game/levels";
+import { loadStats, recordBest, recordPlay } from "./game/levels";
 import { getNickname } from "./game/player";
 import { submitScore } from "./game/supabase";
 
 export default function Home() {
   const [mode, setMode] = useState("menu"); // "menu" | "play" | "edit"
-  const [activeLevelId, setActiveLevelId] = useState(null);
-  const [levelsVersion, setLevelsVersion] = useState(0);
+  // Full level object handed up from Menu — cloud levels aren't in LS, so we
+  // can't look them up here by id alone. Menu already has the merged view.
+  const [activeLevel, setActiveLevel] = useState(null);
   const [stats, setStats] = useState({});
 
   // Nickname gate: null on server render, then either "" (needs prompt) or
@@ -30,31 +26,25 @@ export default function Home() {
 
   useEffect(() => {
     setStats(loadStats());
-  }, [levelsVersion]);
+  }, []);
 
-  const levels = useMemo(() => getAllLevels(), [levelsVersion]);
-  const activeLevel = useMemo(
-    () => levels.find((l) => l.id === activeLevelId),
-    [levels, activeLevelId]
-  );
-  const activeBest = activeLevelId
-    ? stats[activeLevelId]?.best ?? 0
-    : 0;
+  const activeLevelId = activeLevel?.id ?? null;
+  const activeBest = activeLevelId ? stats[activeLevelId]?.best ?? 0 : 0;
 
-  const handlePlay = useCallback((id) => {
-    setActiveLevelId(id);
-    recordPlay(id);
+  const handlePlay = useCallback((level) => {
+    setActiveLevel(level);
+    recordPlay(level.id);
     setMode("play");
   }, []);
 
-  const handleEdit = useCallback((id) => {
-    setActiveLevelId(id);
+  const handleEdit = useCallback((level) => {
+    setActiveLevel(level);
     setMode("edit");
   }, []);
 
   const handleExit = useCallback(() => {
     setMode("menu");
-    setLevelsVersion((n) => n + 1);
+    setStats(loadStats());
   }, []);
 
   const handleGameOver = useCallback(
@@ -72,7 +62,7 @@ export default function Home() {
   );
 
   const handleSaveEdit = useCallback(() => {
-    setLevelsVersion((n) => n + 1);
+    setStats(loadStats());
   }, []);
 
   // Nickname prompt takes precedence over everything else. `nickname === null`

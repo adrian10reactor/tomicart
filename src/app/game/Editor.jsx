@@ -1014,7 +1014,7 @@ export default function Editor({ levelId, onBack, onSave, onPlay }) {
     const withAuthor = { ...level, author: level.author || nickname };
     upsertCustomLevel(withAuthor);
     upsertCloudLevel(withAuthor, nickname);
-    onPlay(withAuthor.id);
+    onPlay(withAuthor);
   };
 
   return (

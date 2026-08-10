@@ -108,7 +108,7 @@ export default function Menu({ onPlay, onEdit }) {
     upsertCustomLevel(level);
     upsertCloudLevel(level, nickname);
     refresh();
-    onEdit(level.id);
+    onEdit(level);
   };
 
   const onDelete = (id) => {
@@ -252,7 +252,7 @@ export default function Menu({ onPlay, onEdit }) {
 
                   <div className="flex flex-col gap-1.5 shrink-0">
                     <button
-                      onClick={() => onPlay(l.id)}
+                      onClick={() => onPlay(l)}
                       className="rounded-full bg-white text-black px-6 py-2 text-sm font-semibold hover:bg-white/90 shadow-sm"
                     >
                       Play
@@ -270,7 +270,7 @@ export default function Menu({ onPlay, onEdit }) {
                     {isOwner && (
                       <>
                         <button
-                          onClick={() => onEdit(l.id)}
+                          onClick={() => onEdit(l)}
                           className="rounded-full text-xs px-3 py-1 border border-white/10 text-white/60 hover:border-white/30"
                         >
                           Edit
