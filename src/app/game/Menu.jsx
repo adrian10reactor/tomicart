@@ -139,11 +139,11 @@ export default function Menu({ onPlay, onEdit }) {
               <kbd className="px-1.5 py-0.5 mx-1 rounded bg-white/10">←</kbd>
               /
               <kbd className="px-1.5 py-0.5 mx-1 rounded bg-white/10">→</kbd>
-              switch &nbsp;·&nbsp;
+              or swipe to switch &nbsp;·&nbsp;
               <kbd className="px-1.5 py-0.5 mx-1 rounded bg-white/10">
                 Space
               </kbd>
-              jump
+              or tap to jump
             </p>
           </div>
           <button

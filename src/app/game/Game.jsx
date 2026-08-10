@@ -709,6 +709,24 @@ export default function Game({ level, best, onScore, onGameOver, onExit }) {
     };
   }, []);
 
+  // Shared input handlers so keyboard + swipe stay in sync.
+  const switchLane = useCallback((dir) => {
+    // dir: "left" | "right" — same lane numbering as the arrow keys.
+    const s = gameStateRef.current;
+    if (!s.running) return;
+    const lvl = levelRef.current;
+    const diverged = divergedLanesFromPoints(
+      s.currentLocalU ?? 0,
+      lvl.trackPoints
+    );
+    const nextLane =
+      dir === "left"
+        ? Math.min(2, s.laneIndex + 1)
+        : Math.max(0, s.laneIndex - 1);
+    if (diverged.has(s.laneIndex) || diverged.has(nextLane)) return;
+    s.laneIndex = nextLane;
+  }, []);
+
   useEffect(() => {
     const onKey = (e) => {
       unlockAudio();
@@ -727,28 +745,67 @@ export default function Game({ level, best, onScore, onGameOver, onExit }) {
         startHop();
         return;
       }
-      if (e.key === "ArrowLeft" || e.key === "a" || e.key === "A" ||
-          e.key === "ArrowRight" || e.key === "d" || e.key === "D") {
-        const lvl = levelRef.current;
-        const diverged = divergedLanesFromPoints(
-          s.currentLocalU ?? 0,
-          lvl.trackPoints
-        );
-        const goingLeft =
-          e.key === "ArrowLeft" || e.key === "a" || e.key === "A";
-        const nextLane = goingLeft
-          ? Math.min(2, s.laneIndex + 1)
-          : Math.max(0, s.laneIndex - 1);
-        // Block the switch if either the lane we're leaving or the lane we'd
-        // land on is currently on a diverged rail — you can only swap
-        // between the two still-connected lanes.
-        if (diverged.has(s.laneIndex) || diverged.has(nextLane)) return;
-        s.laneIndex = nextLane;
+      if (e.key === "ArrowLeft" || e.key === "a" || e.key === "A") {
+        switchLane("left");
+      } else if (e.key === "ArrowRight" || e.key === "d" || e.key === "D") {
+        switchLane("right");
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [status, restart, startHop, onExit]);
+  }, [status, restart, startHop, onExit, switchLane]);
+
+  // Touch: swipe left/right = switch, swipe up = jump, tap = jump too.
+  // 30px feels responsive without triggering on incidental drags.
+  useEffect(() => {
+    const SWIPE = 30;
+    const TAP_MAX = 12;
+    let startX = 0,
+      startY = 0,
+      startT = 0,
+      active = false;
+    const onStart = (e) => {
+      const t = e.touches[0];
+      if (!t) return;
+      startX = t.clientX;
+      startY = t.clientY;
+      startT = performance.now();
+      active = true;
+      unlockAudio();
+    };
+    const onEnd = (e) => {
+      if (!active) return;
+      active = false;
+      const t = e.changedTouches[0];
+      if (!t) return;
+      const dx = t.clientX - startX;
+      const dy = t.clientY - startY;
+      const adx = Math.abs(dx);
+      const ady = Math.abs(dy);
+      if (status === "over") {
+        if (adx < TAP_MAX && ady < TAP_MAX) restart();
+        return;
+      }
+      // Tap = jump (short + tiny displacement).
+      if (adx < TAP_MAX && ady < TAP_MAX && performance.now() - startT < 300) {
+        startHop();
+        return;
+      }
+      if (ady > adx && dy < -SWIPE) {
+        startHop();
+        return;
+      }
+      if (adx > ady && adx > SWIPE) {
+        switchLane(dx < 0 ? "right" : "left");
+      }
+    };
+    window.addEventListener("touchstart", onStart, { passive: true });
+    window.addEventListener("touchend", onEnd, { passive: true });
+    return () => {
+      window.removeEventListener("touchstart", onStart);
+      window.removeEventListener("touchend", onEnd);
+    };
+  }, [status, restart, startHop, switchLane]);
 
   return (
     <div className="fixed inset-0 select-none">

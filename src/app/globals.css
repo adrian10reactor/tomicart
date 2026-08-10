@@ -8,4 +8,7 @@ body {
   background: #0a0a0a;
   color: #ededed;
   font-family: system-ui, -apple-system, Arial, sans-serif;
+  /* Kill iOS pull-to-refresh and horizontal rubber-band during swipes. */
+  overscroll-behavior: none;
+  -webkit-tap-highlight-color: transparent;
 }

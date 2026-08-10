@@ -81,12 +81,15 @@ export default function HUD({
       </div>
 
       <div className="absolute bottom-3 left-0 right-0 text-center text-xs text-white/50">
-        <kbd className="px-1.5 py-0.5 mx-1 rounded bg-white/10">←</kbd>
-        /
-        <kbd className="px-1.5 py-0.5 mx-1 rounded bg-white/10">→</kbd>
-        switch tracks &nbsp;·&nbsp;
-        <kbd className="px-1.5 py-0.5 mx-1 rounded bg-white/10">Space</kbd>
-        jump
+        <span className="hidden sm:inline">
+          <kbd className="px-1.5 py-0.5 mx-1 rounded bg-white/10">←</kbd>
+          /
+          <kbd className="px-1.5 py-0.5 mx-1 rounded bg-white/10">→</kbd>
+          switch tracks &nbsp;·&nbsp;
+          <kbd className="px-1.5 py-0.5 mx-1 rounded bg-white/10">Space</kbd>
+          jump
+        </span>
+        <span className="sm:hidden">swipe to switch · tap to jump</span>
       </div>
 
       {status === "over" && (
