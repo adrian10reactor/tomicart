@@ -110,18 +110,20 @@ export default function HUD({
             >
               🔊
             </button>
-            <button
-              onClick={() => setSettingsOpen((v) => !v)}
-              className={
-                "text-[11px] md:text-xs rounded px-1.5 md:px-2 py-1 border " +
-                (settingsOpen
-                  ? "border-white/60 text-white bg-white/10"
-                  : "border-white/20 text-white/70 hover:text-white/90")
-              }
-              title="Settings"
-            >
-              ⚙︎
-            </button>
+            {isTouch && (
+              <button
+                onClick={() => setSettingsOpen((v) => !v)}
+                className={
+                  "text-[11px] md:text-xs rounded px-1.5 md:px-2 py-1 border " +
+                  (settingsOpen
+                    ? "border-white/60 text-white bg-white/10"
+                    : "border-white/20 text-white/70 hover:text-white/90")
+                }
+                title="Settings"
+              >
+                ⚙︎
+              </button>
+            )}
             <button
               onClick={onExit}
               className="text-[11px] md:text-xs uppercase tracking-wider text-white/60 hover:text-white/90 border border-white/20 rounded px-1.5 md:px-2 py-1"
@@ -134,7 +136,7 @@ export default function HUD({
         </div>
       </div>
 
-      {settingsOpen && (
+      {settingsOpen && isTouch && (
         <div className="pointer-events-auto absolute right-4 top-16 z-20 rounded-xl bg-neutral-900/95 border border-white/15 p-4 w-64 text-white shadow-xl">
           <div className="text-xs uppercase tracking-wider text-white/50 mb-2">
             Mobile controls
