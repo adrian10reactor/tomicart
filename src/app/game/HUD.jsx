@@ -6,6 +6,7 @@ import {
   toggleMusicMuted,
   toggleSfxMuted,
 } from "./audio";
+import { setControlScheme, useSettings } from "./settings";
 
 export default function HUD({
   levelName,
@@ -16,7 +17,13 @@ export default function HUD({
   submitInfo,
   onRestart,
   onExit,
+  onLeft,
+  onRight,
+  onJump,
 }) {
+  const settings = useSettings();
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const useButtons = settings.controlScheme === "buttons";
   const isFired = crashKind === "personboss";
   const submitText = (() => {
     if (!submitInfo) return null;
@@ -89,6 +96,18 @@ export default function HUD({
               🔊
             </button>
             <button
+              onClick={() => setSettingsOpen((v) => !v)}
+              className={
+                "text-xs rounded px-2 py-1 border " +
+                (settingsOpen
+                  ? "border-white/60 text-white bg-white/10"
+                  : "border-white/20 text-white/70 hover:text-white/90")
+              }
+              title="Settings"
+            >
+              ⚙︎
+            </button>
+            <button
               onClick={onExit}
               className="text-xs uppercase tracking-wider text-white/60 hover:text-white/90 border border-white/20 rounded px-2 py-1"
             >
@@ -97,6 +116,41 @@ export default function HUD({
           </div>
         </div>
       </div>
+
+      {settingsOpen && (
+        <div className="pointer-events-auto absolute right-4 top-16 z-20 rounded-xl bg-neutral-900/95 border border-white/15 p-4 w-64 text-white shadow-xl">
+          <div className="text-xs uppercase tracking-wider text-white/50 mb-2">
+            Mobile controls
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              onClick={() => setControlScheme("swipe")}
+              className={
+                "rounded-md text-sm px-3 py-2 border " +
+                (!useButtons
+                  ? "bg-white text-black border-white"
+                  : "border-white/20 text-white/80 hover:border-white/40")
+              }
+            >
+              Swipe
+            </button>
+            <button
+              onClick={() => setControlScheme("buttons")}
+              className={
+                "rounded-md text-sm px-3 py-2 border " +
+                (useButtons
+                  ? "bg-white text-black border-white"
+                  : "border-white/20 text-white/80 hover:border-white/40")
+              }
+            >
+              Buttons
+            </button>
+          </div>
+          <p className="text-white/50 text-xs mt-2">
+            Keyboard controls always work.
+          </p>
+        </div>
+      )}
 
       <div className="absolute bottom-3 left-0 right-0 text-center text-xs text-white/50">
         <span className="hidden sm:inline">
@@ -107,8 +161,47 @@ export default function HUD({
           <kbd className="px-1.5 py-0.5 mx-1 rounded bg-white/10">Space</kbd>
           jump
         </span>
-        <span className="sm:hidden">swipe to switch · tap to jump</span>
+        <span className="sm:hidden">
+          {useButtons
+            ? "use the on-screen buttons"
+            : "swipe to switch · tap to jump"}
+        </span>
       </div>
+
+      {useButtons && status !== "over" && (
+        <div className="pointer-events-none absolute inset-x-0 bottom-8 flex justify-between px-4 sm:hidden">
+          <button
+            onPointerDown={(e) => {
+              e.preventDefault();
+              onLeft?.();
+            }}
+            className="pointer-events-auto w-20 h-20 rounded-full bg-white/15 border border-white/25 text-white text-3xl font-bold active:bg-white/30 backdrop-blur-sm"
+            aria-label="Left"
+          >
+            ←
+          </button>
+          <button
+            onPointerDown={(e) => {
+              e.preventDefault();
+              onJump?.();
+            }}
+            className="pointer-events-auto w-20 h-20 rounded-full bg-cyan-500/25 border border-cyan-300/50 text-white text-lg font-semibold active:bg-cyan-500/45 backdrop-blur-sm"
+            aria-label="Jump"
+          >
+            JUMP
+          </button>
+          <button
+            onPointerDown={(e) => {
+              e.preventDefault();
+              onRight?.();
+            }}
+            className="pointer-events-auto w-20 h-20 rounded-full bg-white/15 border border-white/25 text-white text-3xl font-bold active:bg-white/30 backdrop-blur-sm"
+            aria-label="Right"
+          >
+            →
+          </button>
+        </div>
+      )}
 
       {status === "over" && (
         <div className="pointer-events-auto absolute inset-0 flex items-center justify-center bg-black/60">

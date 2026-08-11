@@ -23,6 +23,7 @@ import TrackSpline from "./TrackSpline";
 import Train from "./Train";
 import { LANES, OBSTACLE_KINDS } from "./constants";
 import { DEFAULT_ENVIRONMENT } from "./levels";
+import { useSettings } from "./settings";
 import {
   buildCurve,
   crossedU,
@@ -646,6 +647,7 @@ export default function Game({
   const [score, setScore] = useState(0);
   const [status, setStatus] = useState("running");
   const [crashKind, setCrashKind] = useState(null);
+  const settings = useSettings();
   // Force the Canvas to mount after hydration. Without this, R3F's setup
   // effects don't fire under Next.js 16 turbopack and the canvas stays blank.
   const [mounted, setMounted] = useState(false);
@@ -772,6 +774,7 @@ export default function Game({
   // Touch: swipe left/right = switch, swipe up = jump, tap = jump too.
   // 30px feels responsive without triggering on incidental drags.
   useEffect(() => {
+    if (settings.controlScheme !== "swipe") return;
     const SWIPE = 30;
     const TAP_MAX = 12;
     let startX = 0,
@@ -819,7 +822,7 @@ export default function Game({
       window.removeEventListener("touchstart", onStart);
       window.removeEventListener("touchend", onEnd);
     };
-  }, [status, restart, startHop, switchLane]);
+  }, [status, restart, startHop, switchLane, settings.controlScheme]);
 
   return (
     <div className="fixed inset-0 select-none">
@@ -848,6 +851,18 @@ export default function Game({
         submitInfo={submitInfo}
         onRestart={restart}
         onExit={onExit}
+        onLeft={() => {
+          unlockAudio();
+          switchLane("left");
+        }}
+        onRight={() => {
+          unlockAudio();
+          switchLane("right");
+        }}
+        onJump={() => {
+          unlockAudio();
+          startHop();
+        }}
       />
     </div>
   );
