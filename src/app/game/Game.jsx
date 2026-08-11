@@ -46,6 +46,10 @@ const DIFFICULTY_MULT = { easy: 2.4, medium: 1.6, hard: 1.0 };
 const CAMERA_BEHIND = 8;
 const CAMERA_HEIGHT = 6.0;
 const CAMERA_LOOK_AHEAD = 6;
+// Narrow viewports (portrait phones) show much less horizontally at the same
+// distance — pull back and up so the train and upcoming obstacles still fit.
+const CAMERA_BEHIND_MOBILE = 13;
+const CAMERA_HEIGHT_MOBILE = 8.5;
 
 function pickObstacleFromTable(table) {
   const total = table.reduce((s, t) => s + (t.weight || 0), 0);
@@ -90,7 +94,10 @@ function Scene({ gameStateRef, levelRef, onScoreChange, onGameOver }) {
   const idCounter = useRef(0);
   const lastResetToken = useRef(0);
 
-  const { camera } = useThree();
+  const { camera, size } = useThree();
+  const isNarrow = size.width < 768;
+  const camBehind = isNarrow ? CAMERA_BEHIND_MOBILE : CAMERA_BEHIND;
+  const camHeight = isNarrow ? CAMERA_HEIGHT_MOBILE : CAMERA_HEIGHT;
 
   const level = levelRef.current;
   const env = level.environment ?? DEFAULT_ENVIRONMENT;
@@ -258,8 +265,8 @@ function Scene({ gameStateRef, levelRef, onScoreChange, onGameOver }) {
     const camPos = f.point
       .clone()
       .add(camLateral)
-      .add(f.tangent.clone().multiplyScalar(-CAMERA_BEHIND))
-      .add(f.up.clone().multiplyScalar(CAMERA_HEIGHT))
+      .add(f.tangent.clone().multiplyScalar(-camBehind))
+      .add(f.up.clone().multiplyScalar(camHeight))
       .add(loopWorldOffset);
     const camLook = f.point
       .clone()

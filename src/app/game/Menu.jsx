@@ -22,6 +22,7 @@ import { getNickname } from "./player";
 import {
   deleteCloudLevel,
   fetchCloudLevels,
+  fetchLeaderboard,
   fetchTopScores,
   isConfigured,
   toggleLikeCloud,
@@ -42,6 +43,25 @@ export default function Menu({ onPlay, onEdit }) {
   const [topScores, setTopScores] = useState({}); // { levelId: {nickname, score} }
   const [myNickname, setMyNickname] = useState("");
   const [sortBy, setSortBy] = useState("plays");
+  // Per-level expanded leaderboard: { [levelId]: { loading, rows } }
+  const [boards, setBoards] = useState({});
+
+  const toggleBoard = (id) => {
+    setBoards((cur) => {
+      if (cur[id]) {
+        const { [id]: _, ...rest } = cur;
+        return rest;
+      }
+      return { ...cur, [id]: { loading: true, rows: [] } };
+    });
+    if (!boards[id] && isConfigured()) {
+      fetchLeaderboard(id, 10).then((rows) => {
+        setBoards((cur) =>
+          cur[id] ? { ...cur, [id]: { loading: false, rows } } : cur
+        );
+      });
+    }
+  };
 
   // Local list is instant. Cloud list + top scores arrive async and get
   // merged in (deduped by id) so shared levels and their high-scorers
@@ -247,7 +267,44 @@ export default function Menu({ onPlay, onEdit }) {
                       <span className="text-xs text-white/40">
                         ▶ {s.plays} · ♥ {s.likes}
                       </span>
+                      <button
+                        onClick={() => toggleBoard(l.id)}
+                        className="text-xs rounded-full px-3 py-1 border border-white/10 text-white/70 hover:border-white/30"
+                      >
+                        {boards[l.id] ? "Hide scores" : "Scoreboard"}
+                      </button>
                     </div>
+
+                    {boards[l.id] && (
+                      <div className="mt-3 rounded-lg bg-black/30 border border-white/10 p-3">
+                        {boards[l.id].loading ? (
+                          <div className="text-white/50 text-sm">Loading…</div>
+                        ) : boards[l.id].rows.length === 0 ? (
+                          <div className="text-white/50 text-sm">
+                            No scores yet — be the first.
+                          </div>
+                        ) : (
+                          <ol className="text-sm space-y-1">
+                            {boards[l.id].rows.map((r, i) => (
+                              <li
+                                key={`${r.player_nickname}-${r.created_at}`}
+                                className="flex items-baseline gap-3"
+                              >
+                                <span className="text-white/40 tabular-nums w-5 text-right">
+                                  {i + 1}.
+                                </span>
+                                <span className="text-white/90 truncate">
+                                  {r.player_nickname}
+                                </span>
+                                <span className="ml-auto font-bold tabular-nums">
+                                  {r.score}
+                                </span>
+                              </li>
+                            ))}
+                          </ol>
+                        )}
+                      </div>
+                    )}
                   </div>
 
                   <div className="flex flex-col gap-1.5 shrink-0">
