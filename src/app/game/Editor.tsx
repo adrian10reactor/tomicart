@@ -292,7 +292,23 @@ function LeftPalette({ tool, onToolChange, onAddPoint, mode }) {
   );
 }
 
-function NumberField({ label, value, min, max, step = 1, onChange }) {
+type NumberFieldProps = {
+  label: string;
+  value: number;
+  min?: number;
+  max?: number;
+  step?: number;
+  onChange: (v: number) => void;
+};
+
+function NumberField({
+  label,
+  value,
+  min,
+  max,
+  step = 1,
+  onChange,
+}: NumberFieldProps) {
   return (
     <label className="block mb-2">
       <div className="text-[10px] uppercase tracking-wider text-white/50 mb-1">

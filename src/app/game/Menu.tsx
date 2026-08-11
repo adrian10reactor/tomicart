@@ -46,8 +46,8 @@ export default function Menu({ onPlay, onEdit }) {
   // Per-level expanded leaderboard: { [levelId]: { loading, rows } }
   const [boards, setBoards] = useState({});
 
-  const toggleBoard = (id) => {
-    setBoards((cur) => {
+  const toggleBoard = (id: string) => {
+    setBoards((cur: Record<string, any>) => {
       if (cur[id]) {
         const { [id]: _, ...rest } = cur;
         return rest;

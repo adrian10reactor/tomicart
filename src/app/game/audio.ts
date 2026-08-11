@@ -3,14 +3,19 @@
 // Music + train ambient use the real mp3 files in /public. Coin chime,
 // crash, jump, hit stay synth (Web Audio).
 
-// -------- Web Audio context for synth SFX --------
-let ctx = null;
-let masterGain = null;
+type MuteState = { sfx: boolean; music: boolean };
+type MuteListener = (m: MuteState) => void;
 
-function ensureCtx() {
+// -------- Web Audio context for synth SFX --------
+let ctx: AudioContext | null = null;
+let masterGain: GainNode | null = null;
+
+function ensureCtx(): AudioContext | null {
   if (typeof window === "undefined") return null;
   if (!ctx) {
-    const Ctor = window.AudioContext || window.webkitAudioContext;
+    const w = window as any;
+    const Ctor: typeof AudioContext | undefined =
+      w.AudioContext || w.webkitAudioContext;
     if (!Ctor) return null;
     ctx = new Ctor();
     masterGain = ctx.createGain();
@@ -22,8 +27,8 @@ function ensureCtx() {
 }
 
 // -------- File-backed music + train ambient --------
-let musicEl = null;
-let trainEl = null;
+let musicEl: HTMLAudioElement | null = null;
+let trainEl: HTMLAudioElement | null = null;
 // Bumped from v1 so any previously-saved "music: on" gets discarded and
 // the new default (music muted) takes effect.
 const MUTE_KEY = "tomica.mute.v2";
@@ -55,14 +60,16 @@ let musicMuted = _saved.music;
 const MUSIC_VOL = 0.18; // was way too loud
 const TRAIN_VOL = 0.55;
 
-const listeners = new Set();
+const listeners = new Set<MuteListener>();
 function notify() {
   for (const cb of listeners) cb({ sfx: sfxMuted, music: musicMuted });
 }
-export function subscribeMute(cb) {
+export function subscribeMute(cb: MuteListener): () => void {
   listeners.add(cb);
   cb({ sfx: sfxMuted, music: musicMuted });
-  return () => listeners.delete(cb);
+  return () => {
+    listeners.delete(cb);
+  };
 }
 export function isSfxMuted() {
   return sfxMuted;

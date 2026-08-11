@@ -97,14 +97,21 @@ export function divergedLanesFromPoints(u, trackPoints) {
 // space (Catmull-Rom knots), NOT arc-length fractions. We must call
 // inner.getPoint(t), NOT inner.getPointAt(u) — mixing them up double-applies
 // the arc-length remap and desyncs positions at the loop seam.
-class WrappedCurve extends THREE.Curve {
-  constructor(inner, uStart, uEnd) {
+class WrappedCurve extends THREE.Curve<THREE.Vector3> {
+  inner: THREE.Curve<THREE.Vector3>;
+  uStart: number;
+  uSpan: number;
+  constructor(
+    inner: THREE.Curve<THREE.Vector3>,
+    uStart: number,
+    uEnd: number
+  ) {
     super();
     this.inner = inner;
     this.uStart = uStart;
     this.uSpan = uEnd - uStart;
   }
-  getPoint(t, target) {
+  getPoint(t: number, target?: THREE.Vector3): THREE.Vector3 {
     const t2 = this.uStart + t * this.uSpan;
     return this.inner.getPoint(t2, target);
   }

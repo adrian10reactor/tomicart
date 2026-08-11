@@ -9,8 +9,13 @@ const RAIL_OFFSET = 0.75;
 const TIE_WIDTH = 1.7;
 const RAIL_LENGTH = 400;
 
-const Track = forwardRef(function Track(
-  { environment = {}, showFullLength = false } = {},
+type TrackProps = {
+  environment?: { groundColor?: string; ballastColor?: string };
+  showFullLength?: boolean;
+};
+
+const Track = forwardRef<any, TrackProps>(function Track(
+  { environment = {}, showFullLength = false },
   tiesGroupRef
 ) {
   const ties = useMemo(

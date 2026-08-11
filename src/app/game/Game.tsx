@@ -636,6 +636,15 @@ function Scene({ gameStateRef, levelRef, onScoreChange, onGameOver }) {
   );
 }
 
+type GameProps = {
+  level: any;
+  best?: number;
+  onScore?: (score: number) => void;
+  onGameOver?: (finalScore: number, crashKind: string | null) => void;
+  onExit?: () => void;
+  submitInfo?: any;
+};
+
 export default function Game({
   level,
   best,
@@ -643,7 +652,7 @@ export default function Game({
   onGameOver,
   onExit,
   submitInfo,
-}) {
+}: GameProps) {
   const [score, setScore] = useState(0);
   const [status, setStatus] = useState("running");
   const [crashKind, setCrashKind] = useState(null);
@@ -660,7 +669,7 @@ export default function Game({
     levelRef.current = level;
   }, [level]);
 
-  const gameStateRef = useRef({
+  const gameStateRef = useRef<any>({
     running: true,
     laneIndex: 1,
     laneX: LANES[1],
@@ -673,6 +682,7 @@ export default function Game({
     resolvedStatic: new Set(),
     resolvedLoop: 0,
     spawnTimer: 0.6,
+    currentLocalU: 0,
   });
 
   const restart = useCallback(() => {

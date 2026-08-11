@@ -7,8 +7,8 @@ import * as THREE from "three";
 const COIN_URL = "/reactor.png";
 
 // Shared texture — one load for every coin instance.
-let cachedTexture = null;
-let cachedPromise = null;
+let cachedTexture: THREE.Texture | null = null;
+let cachedPromise: Promise<THREE.Texture | null> | null = null;
 function useCoinTexture() {
   const [tex, setTex] = useState(cachedTexture);
   useEffect(() => {
@@ -48,7 +48,7 @@ function useCoinTexture() {
 // the logo.
 export default function Coin() {
   const tex = useCoinTexture();
-  const groupRef = useRef();
+  const groupRef = useRef<THREE.Mesh>(null);
   const materials = useMemo(() => {
     const capMat = new THREE.MeshBasicMaterial({
       color: "#111827",

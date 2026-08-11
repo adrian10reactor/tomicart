@@ -274,9 +274,6 @@ export function normalizeLevel(l) {
     : "medium";
   return {
     mode: "random",
-    environment: { ...DEFAULT_ENVIRONMENT },
-    trackPoints: defaultTrackPoints(),
-    obstacles: [],
     ...l,
     environment: { ...DEFAULT_ENVIRONMENT, ...(l.environment || {}) },
     trackPoints: rawPts,

@@ -15,7 +15,12 @@ const TIE_SPACING_ARC = 2.5;
 const RAIL_RADIUS = 0.11;
 const TUBE_RADIAL = 8;
 
-export default function TrackSpline({ trackPoints }) {
+type TrackSplineProps = {
+  trackPoints: any;
+  [extra: string]: any;
+};
+
+export default function TrackSpline({ trackPoints }: TrackSplineProps) {
   const { curve, arcLength, closed } = useMemo(
     () => buildCurve(trackPoints),
     [trackPoints]

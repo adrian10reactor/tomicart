@@ -1,6 +1,6 @@
 "use client";
 
-import { forwardRef, useEffect, useMemo, useState } from "react";
+import React, { forwardRef, useEffect, useMemo, useState } from "react";
 import * as THREE from "three";
 
 // Shared texture cache so we don't reload the same PNG per obstacle instance.
@@ -161,12 +161,18 @@ const FIXED_SCALE_KINDS = new Set([
   "personboss",
 ]);
 
+export type ObstacleProps = {
+  kind: string;
+  scale?: number;
+  meta?: { lanes?: number };
+};
+
 // Renders the shape at (0, 0, 0). Caller is responsible for positioning it.
-const Obstacle = forwardRef(function Obstacle(
+const Obstacle = forwardRef<any, ObstacleProps>(function Obstacle(
   { kind, scale = 1 },
   ref
 ) {
-  const Component = KIND_COMPONENTS[kind];
+  const Component = (KIND_COMPONENTS as Record<string, React.FC>)[kind];
   if (!Component) return <group ref={ref} />;
   const appliedScale = FIXED_SCALE_KINDS.has(kind) ? 1 : scale;
   return (
