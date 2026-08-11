@@ -46,6 +46,17 @@ export default function HUD({
   })();
   const [mute, setMute] = useState({ sfx: false, music: false });
   useEffect(() => subscribeMute(setMute), []);
+  // Touch-capability guard: on-screen controls are for phones/tablets, not
+  // for desktop browsers that happen to have a narrow window.
+  const [isTouch, setIsTouch] = useState(false);
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.matchMedia) return;
+    const mq = window.matchMedia("(pointer: coarse)");
+    setIsTouch(mq.matches);
+    const onChange = (e: MediaQueryListEvent) => setIsTouch(e.matches);
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
   return (
     <div className="pointer-events-none absolute inset-0 flex flex-col">
       <div className="flex justify-between items-center px-3 py-2 md:p-4 text-white/90 font-mono text-sm md:text-base drop-shadow gap-2 md:gap-4">
@@ -159,23 +170,26 @@ export default function HUD({
       )}
 
       <div className="absolute bottom-3 left-0 right-0 text-center text-xs text-white/50">
-        <span className="hidden sm:inline">
-          <kbd className="px-1.5 py-0.5 mx-1 rounded bg-white/10">←</kbd>
-          /
-          <kbd className="px-1.5 py-0.5 mx-1 rounded bg-white/10">→</kbd>
-          switch tracks &nbsp;·&nbsp;
-          <kbd className="px-1.5 py-0.5 mx-1 rounded bg-white/10">Space</kbd>
-          jump
-        </span>
-        <span className="sm:hidden">
-          {useButtons
-            ? "use the on-screen buttons"
-            : "swipe to switch · tap to jump"}
-        </span>
+        {isTouch ? (
+          <span>
+            {useButtons
+              ? "use the on-screen buttons"
+              : "swipe to switch · tap to jump"}
+          </span>
+        ) : (
+          <span>
+            <kbd className="px-1.5 py-0.5 mx-1 rounded bg-white/10">←</kbd>
+            /
+            <kbd className="px-1.5 py-0.5 mx-1 rounded bg-white/10">→</kbd>
+            switch tracks &nbsp;·&nbsp;
+            <kbd className="px-1.5 py-0.5 mx-1 rounded bg-white/10">Space</kbd>
+            jump
+          </span>
+        )}
       </div>
 
-      {useButtons && status !== "over" && (
-        <div className="pointer-events-none absolute inset-x-0 bottom-8 flex justify-between px-4 sm:hidden">
+      {useButtons && isTouch && status !== "over" && (
+        <div className="pointer-events-none absolute inset-x-0 bottom-8 flex justify-between px-4">
           <button
             onPointerDown={(e) => {
               e.preventDefault();
