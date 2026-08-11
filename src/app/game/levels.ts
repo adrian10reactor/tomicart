@@ -242,64 +242,26 @@ export function normalizeLevel(l) {
         })
         .filter(Boolean)
     : [];
-  // Migrate the spawn table. Any obsolete kind in the saved data means the
-  // level was created before the person-sprite overhaul — those levels get
-  // the fresh default table so the user actually sees the new obstacle
-  // variety instead of 3× the same migrated fallback.
-  const rawTable = Array.isArray(l.spawnTable) ? l.spawnTable : [];
-  const hadObsoleteKind = rawTable.some(
-    (row) =>
-      row && typeof row === "object" && row.kind in KIND_MIGRATIONS
-  );
-  let spawnTable;
-  if (hadObsoleteKind || rawTable.length === 0) {
-    spawnTable = defaultSpawnTable();
-  } else {
-    spawnTable = rawTable
-      .map((row) => {
-        if (!row || typeof row !== "object") return null;
-        if (!OBSTACLE_KINDS[row.kind]) return null;
-        return {
-          kind: row.kind,
-          weight: Math.max(0, Number(row.weight) || 0),
-          scale: Number(row.scale) > 0 ? Number(row.scale) : 1,
-        };
-      })
-      .filter(Boolean);
-    if (!spawnTable.length) spawnTable = defaultSpawnTable();
-  }
+  // Editor has been simplified: no per-level spawn tuning. Every level uses
+  // the same default pool of obstacles; only `difficulty` varies density.
+  const spawnTable = defaultSpawnTable();
 
   const difficulty = ["easy", "medium", "hard"].includes(l.difficulty)
     ? l.difficulty
     : "medium";
+  // Editor simplification: no placed obstacles, no split rails. Every level
+  // runs in random mode with an empty obstacles list and no divergences,
+  // regardless of what's stored (legacy custom levels are cleaned on load).
+  const cleanTrackPoints = rawPts.map((p) => ({ x: p.x, y: p.y, z: p.z }));
   return {
-    mode: "random",
     ...l,
+    mode: "random",
     environment: { ...DEFAULT_ENVIRONMENT, ...(l.environment || {}) },
-    trackPoints: rawPts,
-    divergences,
+    trackPoints: cleanTrackPoints,
+    divergences: [],
+    obstacles: [],
     difficulty,
     spawnTable,
-    // Migrate old-style sequence items (with z) to new obstacles (with u)
-    obstacles:
-      Array.isArray(l.obstacles) && l.obstacles.length
-        ? l.obstacles
-        : Array.isArray(l.sequence)
-        ? l.sequence.map((it) => ({
-            id: it.id,
-            kind: it.kind,
-            span: it.span || "lane",
-            laneIndex: it.laneIndex ?? 1,
-            u:
-              typeof it.u === "number"
-                ? it.u
-                : Math.max(
-                    0,
-                    Math.min(0.999, (it.z || 0) / (l.loopLength || 100))
-                  ),
-            scale: it.scale ?? 1,
-          }))
-        : [],
   };
 }
 
