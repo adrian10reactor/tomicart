@@ -181,7 +181,7 @@ export default function HUD({
               e.preventDefault();
               onLeft?.();
             }}
-            className="pointer-events-auto w-20 h-20 rounded-full bg-white/15 border border-white/25 text-white text-3xl font-bold active:bg-white/30 backdrop-blur-sm"
+            className="pointer-events-auto w-20 h-20 rounded-full bg-white/15 border border-white/25 text-white text-3xl font-bold active:bg-white/30 backdrop-blur-sm flex items-center justify-center leading-none"
             aria-label="Left"
           >
             ←
@@ -201,7 +201,7 @@ export default function HUD({
               e.preventDefault();
               onRight?.();
             }}
-            className="pointer-events-auto w-20 h-20 rounded-full bg-white/15 border border-white/25 text-white text-3xl font-bold active:bg-white/30 backdrop-blur-sm"
+            className="pointer-events-auto w-20 h-20 rounded-full bg-white/15 border border-white/25 text-white text-3xl font-bold active:bg-white/30 backdrop-blur-sm flex items-center justify-center leading-none"
             aria-label="Right"
           >
             →
