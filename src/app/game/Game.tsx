@@ -336,7 +336,8 @@ function Scene({ gameStateRef, levelRef, onScoreChange, onGameOver }) {
       // Track distance since the last full-width (jump) obstacle so we can
       // enforce a longer cooldown between them — otherwise you get two logs
       // in a row that's physically impossible to jump.
-      state.distSinceFullWidth = (state.distSinceFullWidth || 0) + state.speed * dt;
+      state.distSinceFullWidth =
+        (state.distSinceFullWidth || 0) + state.speed * dt;
 
       if (state.spawnTimer <= 0) {
         const diffMult =
@@ -364,8 +365,7 @@ function Scene({ gameStateRef, levelRef, onScoreChange, onGameOver }) {
 
         let pick = pickObstacleFromTable(level.spawnTable);
         let meta = pick && OBSTACLE_KINDS[pick.kind];
-        const isFullWidth =
-          meta && (pick.span || meta.defaultSpan) === "all";
+        const isFullWidth = meta && (pick.span || meta.defaultSpan) === "all";
         if (
           isFullWidth &&
           (state.distSinceFullWidth < FULL_WIDTH_MIN_GAP ||
@@ -415,9 +415,7 @@ function Scene({ gameStateRef, levelRef, onScoreChange, onGameOver }) {
             // one of the other lanes, so you have to actually switch instead
             // of gliding straight past a single-lane block.
             if (Math.random() < 0.3) {
-              const otherLanes = [0, 1, 2].filter(
-                (l) => l !== primaryLane
-              );
+              const otherLanes = [0, 1, 2].filter((l) => l !== primaryLane);
               const partnerLane =
                 otherLanes[Math.floor(Math.random() * otherLanes.length)];
               const partnerPick =
@@ -427,12 +425,7 @@ function Scene({ gameStateRef, levelRef, onScoreChange, onGameOver }) {
                     return m && (t.span || m.defaultSpan) === "lane";
                   })
                 ) || pick;
-              pushOne(
-                partnerPick.kind,
-                partnerLane,
-                "lane",
-                partnerPick.scale
-              );
+              pushOne(partnerPick.kind, partnerLane, "lane", partnerPick.scale);
             }
           }
 
@@ -472,10 +465,8 @@ function Scene({ gameStateRef, levelRef, onScoreChange, onGameOver }) {
       let lane =
         laneCandidates[Math.floor(Math.random() * laneCandidates.length)];
       state.lastCoinLane = lane;
-      const zigzagAt =
-        Math.random() < 0.35 ? Math.floor(count / 2) : -1;
-      const baseUAbs =
-        state.distance / AL + Math.min(0.7, COIN_LEAD / AL);
+      const zigzagAt = Math.random() < 0.35 ? Math.floor(count / 2) : -1;
+      const baseUAbs = state.distance / AL + Math.min(0.7, COIN_LEAD / AL);
       for (let i = 0; i < count; i++) {
         if (i === zigzagAt) {
           const others = [0, 1, 2].filter((l) => l !== lane);
@@ -514,7 +505,10 @@ function Scene({ gameStateRef, levelRef, onScoreChange, onGameOver }) {
           }
         }
       }
-      if ((c.collected && c.loopIdx <= currentLoop) || c.loopIdx < currentLoop - 1) {
+      if (
+        (c.collected && c.loopIdx <= currentLoop) ||
+        c.loopIdx < currentLoop - 1
+      ) {
         coinsRef.current.splice(i, 1);
       }
     }

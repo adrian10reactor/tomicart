@@ -249,16 +249,15 @@ export function normalizeLevel(l) {
   const difficulty = ["easy", "medium", "hard"].includes(l.difficulty)
     ? l.difficulty
     : "medium";
-  // Editor simplification: no placed obstacles, no split rails. Every level
-  // runs in random mode with an empty obstacles list and no divergences,
-  // regardless of what's stored (legacy custom levels are cleaned on load).
-  const cleanTrackPoints = rawPts.map((p) => ({ x: p.x, y: p.y, z: p.z }));
+  // Editor simplification: no placed obstacles from the UI, only random
+  // spawning. Existing divergences and per-point laneDeltas are preserved so
+  // built-in levels (e.g. rollercoaster) still render their split rails.
   return {
     ...l,
     mode: "random",
     environment: { ...DEFAULT_ENVIRONMENT, ...(l.environment || {}) },
-    trackPoints: cleanTrackPoints,
-    divergences: [],
+    trackPoints: rawPts,
+    divergences,
     obstacles: [],
     difficulty,
     spawnTable,
