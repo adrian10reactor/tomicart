@@ -690,7 +690,7 @@ export default function Game({
     (finalScore, kind) => {
       setStatus("over");
       setCrashKind(kind ?? null);
-      onGameOver?.(finalScore);
+      onGameOver?.(finalScore, kind ?? null);
     },
     [onGameOver]
   );

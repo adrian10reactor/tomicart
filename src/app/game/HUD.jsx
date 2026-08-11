@@ -38,6 +38,8 @@ export default function HUD({
         return "Set a nickname to appear on the leaderboard.";
       case "offline":
         return "Leaderboard offline — score saved locally.";
+      case "voided":
+        return "Run voided — the boss cost you everything.";
       default:
         return null;
     }
@@ -225,7 +227,8 @@ export default function HUD({
                   "mb-6 text-sm " +
                   (submitInfo?.state === "ok"
                     ? "text-emerald-300"
-                    : submitInfo?.state === "error"
+                    : submitInfo?.state === "error" ||
+                      submitInfo?.state === "voided"
                     ? "text-red-300"
                     : "text-white/50")
                 }

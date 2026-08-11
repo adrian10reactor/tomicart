@@ -53,8 +53,13 @@ export default function Home() {
   }, []);
 
   const handleGameOver = useCallback(
-    (finalScore) => {
+    (finalScore, crashKind) => {
       if (!activeLevelId) return;
+      // Boss = instant fire. The run is voided — no best, no leaderboard entry.
+      if (crashKind === "personboss") {
+        setSubmitInfo({ state: "voided", score: finalScore });
+        return;
+      }
       recordBest(activeLevelId, finalScore);
       setStats(loadStats());
       const nickname = getNickname();
