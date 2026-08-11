@@ -13,10 +13,28 @@ export default function HUD({
   best,
   status,
   crashKind,
+  submitInfo,
   onRestart,
   onExit,
 }) {
   const isFired = crashKind === "personboss";
+  const submitText = (() => {
+    if (!submitInfo) return null;
+    switch (submitInfo.state) {
+      case "submitting":
+        return "Submitting to leaderboard…";
+      case "ok":
+        return `Score submitted to leaderboard as ${submitInfo.nickname}.`;
+      case "error":
+        return "Couldn't submit score — check your connection.";
+      case "no-nickname":
+        return "Set a nickname to appear on the leaderboard.";
+      case "offline":
+        return "Leaderboard offline — score saved locally.";
+      default:
+        return null;
+    }
+  })();
   const [mute, setMute] = useState({ sfx: false, music: false });
   useEffect(() => subscribeMute(setMute), []);
   return (
@@ -105,9 +123,23 @@ export default function HUD({
             >
               {isFired ? "FIRED" : "Crashed!"}
             </h2>
-            <p className="text-white/70 mb-6">
+            <p className="text-white/70 mb-2">
               {isFired ? "The boss got you. " : null}Score: {score}
             </p>
+            {submitText && (
+              <p
+                className={
+                  "mb-6 text-sm " +
+                  (submitInfo?.state === "ok"
+                    ? "text-emerald-300"
+                    : submitInfo?.state === "error"
+                    ? "text-red-300"
+                    : "text-white/50")
+                }
+              >
+                {submitText}
+              </p>
+            )}
             <div className="flex gap-3 justify-center">
               <button
                 onClick={onRestart}

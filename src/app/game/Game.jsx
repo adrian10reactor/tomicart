@@ -635,7 +635,14 @@ function Scene({ gameStateRef, levelRef, onScoreChange, onGameOver }) {
   );
 }
 
-export default function Game({ level, best, onScore, onGameOver, onExit }) {
+export default function Game({
+  level,
+  best,
+  onScore,
+  onGameOver,
+  onExit,
+  submitInfo,
+}) {
   const [score, setScore] = useState(0);
   const [status, setStatus] = useState("running");
   const [crashKind, setCrashKind] = useState(null);
@@ -838,6 +845,7 @@ export default function Game({ level, best, onScore, onGameOver, onExit }) {
         best={best ?? 0}
         status={status}
         crashKind={crashKind}
+        submitInfo={submitInfo}
         onRestart={restart}
         onExit={onExit}
       />
