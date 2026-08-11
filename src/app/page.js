@@ -48,9 +48,30 @@ export default function Home() {
   }, []);
 
   const handleExit = useCallback(() => {
-    setMode("menu");
+    // If we pushed a history entry when entering play/edit, pop it so the URL
+    // and back-stack stay in sync. The popstate handler below flips mode.
+    if (typeof window !== "undefined" && window.history.state?.tomicart) {
+      window.history.back();
+    } else {
+      setMode("menu");
+    }
     setStats(loadStats());
   }, []);
+
+  // Add a history entry when entering play/edit so the browser Back button
+  // returns to the menu instead of leaving the site. If we're already on a
+  // non-menu entry (editor → play), replace instead of stacking a second one.
+  useEffect(() => {
+    if (mode === "menu") return;
+    if (window.history.state?.tomicart) {
+      window.history.replaceState({ tomicart: mode }, "");
+    } else {
+      window.history.pushState({ tomicart: mode }, "");
+    }
+    const onPop = () => setMode("menu");
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, [mode]);
 
   const handleGameOver = useCallback(
     (finalScore, crashKind) => {

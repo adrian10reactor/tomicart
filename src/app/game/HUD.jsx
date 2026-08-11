@@ -48,35 +48,37 @@ export default function HUD({
   useEffect(() => subscribeMute(setMute), []);
   return (
     <div className="pointer-events-none absolute inset-0 flex flex-col">
-      <div className="flex justify-between p-4 text-white/90 font-mono text-sm md:text-base drop-shadow gap-4">
-        <div className="flex flex-col">
-          <div className="text-white/60 text-xs uppercase tracking-wider">
+      <div className="flex justify-between items-center px-3 py-2 md:p-4 text-white/90 font-mono text-sm md:text-base drop-shadow gap-2 md:gap-4">
+        <div className="flex flex-col min-w-0">
+          <div className="hidden md:block text-white/60 text-xs uppercase tracking-wider">
             Level
           </div>
-          <div className="truncate max-w-[220px]">{levelName}</div>
+          <div className="truncate max-w-[110px] sm:max-w-[180px] md:max-w-[220px] text-xs md:text-base">
+            {levelName}
+          </div>
         </div>
-        <div className="flex gap-6 items-center">
-          <div className="flex items-center gap-2">
+        <div className="flex gap-2 md:gap-6 items-center min-w-0">
+          <div className="flex items-center gap-1.5 md:gap-2">
             <img
               src="/reactor.png"
               alt=""
-              className="w-8 h-8 md:w-10 md:h-10 drop-shadow"
+              className="w-6 h-6 md:w-10 md:h-10 drop-shadow"
             />
-            <div className="text-3xl md:text-5xl font-bold tabular-nums drop-shadow">
+            <div className="text-2xl md:text-5xl font-bold tabular-nums drop-shadow leading-none">
               {score}
             </div>
           </div>
-          <div className="text-right">
+          <div className="text-right hidden sm:block">
             <div className="text-white/60 text-xs uppercase tracking-wider">
               Best
             </div>
             <div className="text-lg md:text-xl tabular-nums">{best}</div>
           </div>
-          <div className="flex gap-1.5 pointer-events-auto">
+          <div className="flex gap-1 md:gap-1.5 pointer-events-auto">
             <button
               onClick={toggleMusicMuted}
               className={
-                "text-xs rounded px-2 py-1 border " +
+                "text-[11px] md:text-xs rounded px-1.5 md:px-2 py-1 border " +
                 (mute.music
                   ? "border-white/20 text-white/50"
                   : "border-cyan-400/40 text-cyan-200 bg-cyan-500/10")
@@ -88,7 +90,7 @@ export default function HUD({
             <button
               onClick={toggleSfxMuted}
               className={
-                "text-xs rounded px-2 py-1 border " +
+                "text-[11px] md:text-xs rounded px-1.5 md:px-2 py-1 border " +
                 (mute.sfx
                   ? "border-white/20 text-white/50"
                   : "border-amber-400/40 text-amber-200 bg-amber-500/10")
@@ -100,7 +102,7 @@ export default function HUD({
             <button
               onClick={() => setSettingsOpen((v) => !v)}
               className={
-                "text-xs rounded px-2 py-1 border " +
+                "text-[11px] md:text-xs rounded px-1.5 md:px-2 py-1 border " +
                 (settingsOpen
                   ? "border-white/60 text-white bg-white/10"
                   : "border-white/20 text-white/70 hover:text-white/90")
@@ -111,9 +113,11 @@ export default function HUD({
             </button>
             <button
               onClick={onExit}
-              className="text-xs uppercase tracking-wider text-white/60 hover:text-white/90 border border-white/20 rounded px-2 py-1"
+              className="text-[11px] md:text-xs uppercase tracking-wider text-white/60 hover:text-white/90 border border-white/20 rounded px-1.5 md:px-2 py-1"
+              title="Menu"
             >
-              Menu (Esc)
+              <span className="hidden md:inline">Menu (Esc)</span>
+              <span className="md:hidden">✕</span>
             </button>
           </div>
         </div>

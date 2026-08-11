@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 
 const KEY = "tomicart_settings_v1";
-const DEFAULTS = { controlScheme: "swipe" }; // "swipe" | "buttons"
+const DEFAULTS = { controlScheme: "buttons" }; // "swipe" | "buttons"
 
 let cached = null;
 const listeners = new Set();

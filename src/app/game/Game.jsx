@@ -781,9 +781,15 @@ export default function Game({
       startY = 0,
       startT = 0,
       active = false;
+    const isUiTarget = (target) =>
+      !!(target && target.closest && target.closest("button, a, input"));
     const onStart = (e) => {
       const t = e.touches[0];
       if (!t) return;
+      if (isUiTarget(e.target)) {
+        active = false;
+        return;
+      }
       startX = t.clientX;
       startY = t.clientY;
       startT = performance.now();
@@ -795,6 +801,7 @@ export default function Game({
       active = false;
       const t = e.changedTouches[0];
       if (!t) return;
+      if (isUiTarget(e.target)) return;
       const dx = t.clientX - startX;
       const dy = t.clientY - startY;
       const adx = Math.abs(dx);
